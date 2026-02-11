@@ -198,7 +198,8 @@ export class AppleProvider extends BaseProvider {
   private async runJxa(script: string): Promise<string> {
     try {
       const { stdout } = await execFileAsync('osascript', ['-l', 'JavaScript', '-e', script], {
-        timeout: 30000,
+        timeout: 120000,
+        maxBuffer: 10 * 1024 * 1024,
       });
       return stdout.trim();
     } catch (err: any) {
