@@ -33,8 +33,9 @@ function hasNameFields(name?: ContactName): name is ContactName {
 
 /** Best-effort name parsing from a full name string. */
 export function parseName(fullName: string): ContactName {
-  const parts = fullName.trim().split(/\s+/);
-  if (parts.length === 0) return {};
+  const trimmed = fullName.trim();
+  if (!trimmed) return {};
+  const parts = trimmed.split(/\s+/);
   if (parts.length === 1) return { givenName: parts[0] };
   if (parts.length === 2) return { givenName: parts[0], familyName: parts[1] };
   return {

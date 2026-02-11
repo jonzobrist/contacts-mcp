@@ -183,10 +183,13 @@ function buildBlocks(contacts: Contact[]): Map<string, Contact[]> {
   for (const contact of contacts) {
     const keys = new Set<string>();
 
-    // Block by first letter of given + family name
+    // Block by first letter of given + family name (sorted so swapped names share a block)
     const g = (contact.name.givenName ?? contact.fullName.split(' ')[0] ?? '')[0]?.toLowerCase() ?? '';
     const f = (contact.name.familyName ?? contact.fullName.split(' ').pop() ?? '')[0]?.toLowerCase() ?? '';
-    if (g || f) keys.add(`name:${g}${f}`);
+    if (g || f) {
+      const nameKey = [g, f].sort().join('');
+      keys.add(`name:${nameKey}`);
+    }
 
     // Block by email domain
     for (const email of contact.emails) {

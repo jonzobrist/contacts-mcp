@@ -4,10 +4,10 @@ import type { Contact, ContactPhone } from '../types/index.js';
 /** Normalize a phone number to E.164 format. Returns original if parsing fails. */
 export function normalizePhone(raw: string, defaultCountry: string = 'US'): string {
   const parsed = parsePhoneNumberFromString(raw, defaultCountry as any);
-  if (parsed?.isValid()) {
+  if (parsed && (parsed.isValid() || parsed.isPossible())) {
     return parsed.format('E.164');
   }
-  // Try without country code
+  // Fallback: strip formatting characters
   const stripped = raw.replace(/[\s\-\(\)\.]/g, '');
   return stripped || raw;
 }

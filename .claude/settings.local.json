@@ -19,7 +19,10 @@
       "Bash(while read f)",
       "Bash(done)",
       "Bash(ls:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(claude mcp add:*)",
+      "Bash(cat:*)",
+      "Bash(npm test:*)"
     ]
   }
 }
