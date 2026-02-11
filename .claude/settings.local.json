@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(npm info:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:kelseykm.github.io)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "Bash(timeout 5 node:*)",
+      "Bash(echo:*)",
+      "Bash(printf:*)",
+      "Bash(gtimeout:*)",
+      "Bash(node -e \"\nconst { spawn } = require\\(''child_process''\\);\nconst child = spawn\\(''node'', [''dist/index.js''], { stdio: [''pipe'', ''pipe'', ''pipe''] }\\);\n\nlet stdout = '''';\nlet stderr = '''';\n\nchild.stdout.on\\(''data'', d => { stdout += d.toString\\(\\); }\\);\nchild.stderr.on\\(''data'', d => { stderr += d.toString\\(\\); }\\);\n\nconst msg = JSON.stringify\\({jsonrpc:''2.0'',id:1,method:''initialize'',params:{protocolVersion:''2024-11-05'',capabilities:{},clientInfo:{name:''test'',version:''1.0''}}}\\);\nchild.stdin.write\\(msg + ''\\\\n''\\);\n\nsetTimeout\\(\\(\\) => {\n  child.kill\\(\\);\n  console.log\\(''STDOUT:'', stdout.substring\\(0, 500\\)\\);\n  console.log\\(''STDERR:'', stderr.substring\\(0, 500\\)\\);\n}, 3000\\);\n\")",
+      "Bash(node -e:*)",
+      "Bash(while read f)",
+      "Bash(done)",
+      "Bash(ls:*)",
+      "Bash(lsof:*)"
+    ]
+  }
+}
