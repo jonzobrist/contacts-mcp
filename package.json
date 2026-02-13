@@ -8,11 +8,11 @@
     "contacts-mcp": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "start": "node dist/index.js",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "build": "bun run tsc",
+    "dev": "bun src/index.ts",
+    "start": "bun dist/index.js",
+    "test": "bun vitest run",
+    "test:watch": "bun vitest"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
@@ -27,7 +27,6 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/uuid": "^10.0.0",
-    "tsx": "^4.0.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   }

@@ -8,21 +8,21 @@ Contacts are stored as individual vCard files in a git repository. Every mutatio
 
 ### Prerequisites
 
-- Node.js 18+
+- [Bun](https://bun.sh) 1.0+
 - Git (available in PATH)
 
 ### Install & Build
 
 ```bash
 cd contacts-mcp
-npm install
-npm run build
+bun install
+bun run build
 ```
 
 ### Add to Claude Code
 
 ```bash
-claude mcp add contacts node /path/to/contacts-mcp/dist/index.js
+claude mcp add contacts bun /path/to/contacts-mcp/dist/index.js
 ```
 
 ### Add to Claude Desktop
@@ -33,7 +33,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "contacts": {
-      "command": "node",
+      "command": "bun",
       "args": ["/path/to/contacts-mcp/dist/index.js"]
     }
   }
@@ -42,10 +42,10 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ### Development Mode
 
-Run directly from source without building:
+Run directly from source without building (bun runs TypeScript natively):
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 ### Verify It Works
@@ -53,7 +53,7 @@ npm run dev
 Use the MCP Inspector to test interactively:
 
 ```bash
-npx @modelcontextprotocol/inspector node dist/index.js
+bunx @modelcontextprotocol/inspector bun dist/index.js
 ```
 
 ## What It Does
@@ -127,7 +127,7 @@ No config file needed. The server works out of the box with the local git store 
 Or via environment variable:
 
 ```bash
-CONTACTS_MCP_STORE=/path/to/my/contacts-repo node dist/index.js
+CONTACTS_MCP_STORE=/path/to/my/contacts-repo bun dist/index.js
 ```
 
 ### Full Config with Providers

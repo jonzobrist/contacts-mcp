@@ -40,7 +40,7 @@ beforeAll(async () => {
   responses = new Map();
   nextId = 1;
 
-  child = spawn('node', ['dist/index.js'], {
+  child = spawn('bun', ['dist/index.js'], {
     cwd: path.resolve(import.meta.dirname, '../..'),
     env: { ...process.env, CONTACTS_MCP_STORE: storePath },
     stdio: ['pipe', 'pipe', 'pipe'],

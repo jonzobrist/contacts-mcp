@@ -171,13 +171,13 @@ These need mocks or real credentials. Start with mocks.
 
 ```bash
 # Run all tests
-npm test
+bun test
 
 # Watch mode
-npm run test:watch
+bun run test:watch
 
 # Run specific test file
-npx vitest run tests/contacts/vcard.test.ts
+bunx vitest run tests/contacts/vcard.test.ts
 ```
 
 ---
@@ -188,7 +188,7 @@ npx vitest run tests/contacts/vcard.test.ts
 
 **Testing & reliability**
 - [ ] Write all unit tests listed above
-- [ ] CI pipeline (GitHub Actions) — lint, typecheck, test on Node 18/20/22
+- [ ] CI pipeline (GitHub Actions) — lint, typecheck, test on Bun latest
 - [ ] Add `eslint` + `prettier` config
 
 **Import/export improvements**
@@ -300,8 +300,8 @@ Comparing every pair of N contacts is O(N^2). With 5,000 contacts that's 12.5 mi
 ```bash
 git clone <repo>
 cd contacts-mcp
-npm install
-npm run build
+bun install
+bun run build
 ```
 
 ### Code Style

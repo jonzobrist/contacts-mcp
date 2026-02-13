@@ -22,7 +22,10 @@
       "Bash(lsof:*)",
       "Bash(claude mcp add:*)",
       "Bash(cat:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(bun install:*)",
+      "Bash(bun run build:*)",
+      "Bash(bun test:*)"
     ]
   }
 }
