@@ -58,7 +58,7 @@ bunx @modelcontextprotocol/inspector bun dist/index.js
 
 ## What It Does
 
-Once connected, your AI assistant gets 14 tools and 4 resources for managing contacts:
+Once connected, your AI assistant gets 16 tools and 4 resources for managing contacts:
 
 ### Tools
 
@@ -78,6 +78,8 @@ Once connected, your AI assistant gets 14 tools and 4 resources for managing con
 | `list_providers` | Show all configured providers and their sync status. |
 | `rollback` | Undo changes by reverting git commits. Modes: undo last N, revert to a specific commit, revert to a tag. Dry-run supported. Creates a safety tag first so the rollback itself can be undone. |
 | `history` | View change history — globally or for a specific contact. Shows operation type, commit hash, date, and message. |
+| `add_research_findings` | Record facts an agent discovered about a contact through its own research (web search, LinkedIn, company sites, etc.) — contacts-mcp does no research itself, it only stores what the caller found. High-confidence findings tied to a known field (organization name/title/department, birthday, anniversary, urls) are applied automatically; everything else is just logged. Emails/phones/addresses can never be auto-applied — use `update_contact` for those. Duplicate findings (same fact + source) are skipped. |
+| `remove_research_finding` | Delete a single research finding by id, e.g. to correct bad research. |
 
 ### CLI Export, Import, Resolve, and Sync
 
@@ -96,12 +98,14 @@ contacts-mcp import contacts.vcf --dry-run
 contacts-mcp import contacts.vcf --allow-duplicates
 contacts-mcp resolve --input contact-points.json --output -
 contacts-mcp sync-provider --provider apple --direction pull
+contacts-mcp import contacts.vcf --debug
 ```
 
 All of these log progress to stderr as they run (file reads, parse counts,
-duplicate checks, git commit progress, sync pull/push progress) — set `DEBUG=1`
-for more verbose per-item debug output. Only the final result goes to stdout, so
-piping/redirecting stdout is safe.
+duplicate checks, git commit progress, sync pull/push progress) — add `--debug`
+(or `-d`) for more verbose per-item debug output, or set it once for every run
+via config.json (see [Debug Logging](#debug-logging)). Only the final result
+goes to stdout, so piping/redirecting stdout is safe.
 
 #### Shorter command
 
@@ -198,11 +202,27 @@ Or via environment variable:
 CONTACTS_MCP_STORE=/path/to/my/contacts-repo bun dist/index.js
 ```
 
+### Debug Logging
+
+Set `"debug": true` in config.json to always get verbose debug logging, without
+having to remember `DEBUG=1` or `--debug` each time:
+
+```json
+{
+  "debug": true
+}
+```
+
+The CLI's `--debug`/`-d` flag and the `DEBUG` env var both work too — any one of
+config.json, the env var, or the flag turns debug logging on. All logging goes
+to stderr, so it never corrupts the MCP stdio transport or CLI stdout output.
+
 ### Full Config with Providers
 
 ```json
 {
   "storePath": "~/.contacts-mcp/store",
+  "debug": false,
   "providers": [
     {
       "name": "google-personal",
@@ -241,7 +261,7 @@ CONTACTS_MCP_STORE=/path/to/my/contacts-repo bun dist/index.js
 |---|---|---|
 | `CONTACTS_MCP_CONFIG` | `~/.contacts-mcp/config.json` | Path to config file |
 | `CONTACTS_MCP_STORE` | `~/.contacts-mcp/store` | Path to git-backed contact store |
-| `DEBUG` | (unset) | Set to any value to enable debug logging |
+| `DEBUG` | (unset) | Set to any value to enable debug logging (same as `"debug": true` in config.json or `--debug` on the CLI) |
 
 ## Provider Setup
 

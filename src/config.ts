@@ -6,6 +6,7 @@ import type { ProviderConfig } from './types/index.js';
 export interface AppConfig {
   storePath: string;
   providers: ProviderConfig[];
+  debug: boolean;
 }
 
 const DEFAULT_STORE_PATH = path.join(os.homedir(), '.contacts-mcp', 'store');
@@ -25,6 +26,7 @@ export async function loadConfig(): Promise<AppConfig> {
 
   let providers: ProviderConfig[] = [];
   let resolvedStorePath = storePath;
+  let debug = false;
 
   try {
     const raw = await fs.readFile(configPath, 'utf-8');
@@ -33,9 +35,10 @@ export async function loadConfig(): Promise<AppConfig> {
       resolvedStorePath = expandTilde(parsed.storePath);
     }
     providers = parsed.providers ?? [];
+    debug = Boolean(parsed.debug);
   } catch {
     // No config file yet - that's fine, use defaults
   }
 
-  return { storePath: resolvedStorePath, providers };
+  return { storePath: resolvedStorePath, providers, debug };
 }

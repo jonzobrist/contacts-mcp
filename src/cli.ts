@@ -7,7 +7,7 @@ import { AppleProvider } from './providers/apple.js';
 import { GoogleProvider } from './providers/google.js';
 import { CardDAVProvider } from './providers/carddav.js';
 import type { ContactProvider, ProviderConfig } from './types/index.js';
-import { logger } from './utils/index.js';
+import { logger, setDebugEnabled } from './utils/index.js';
 
 interface CliOptions {
   command: string;
@@ -22,6 +22,7 @@ interface CliOptions {
   defaultCountry: string;
   format: 'json' | 'csv' | 'vcf';
   skipDuplicates: boolean;
+  debug: boolean;
 }
 
 export async function maybeRunCli(argv: string[]): Promise<boolean> {
@@ -37,9 +38,11 @@ export async function maybeRunCli(argv: string[]): Promise<boolean> {
   }
 
   const options = parseOptions(argv.slice(2));
+  if (options.debug) setDebugEnabled(true);
   logger.debug('Parsed CLI options:', options);
 
   const config = await loadConfig();
+  if (config.debug) setDebugEnabled(true);
   logger.info(`Using store at ${config.storePath}`);
   const store = new GitContactStore(config.storePath);
   await store.init();
@@ -111,6 +114,7 @@ function parseOptions(args: string[]): CliOptions {
     conflictStrategy: 'newest-wins',
     dryRun: false,
     skipDuplicates: true,
+    debug: Boolean(process.env.DEBUG),
   };
 
   // Allow `contacts-mcp import contacts.vcf` as shorthand for `--file contacts.vcf`
@@ -136,6 +140,10 @@ function parseOptions(args: string[]): CliOptions {
         break;
       case '--allow-duplicates':
         options.skipDuplicates = false;
+        break;
+      case '--debug':
+      case '-d':
+        options.debug = true;
         break;
       case '--provider':
         options.provider = args[++i];
@@ -291,7 +299,9 @@ Usage:
 Without a command, contacts-mcp starts the MCP stdio server (it will sit waiting
 on stdin — if that's not what you wanted, check your command against the list above).
 
-Set DEBUG=1 for verbose debug logging. All log output goes to stderr; only
-command results go to stdout, so you can safely pipe/redirect stdout.
+Pass --debug (-d) for verbose debug logging on any command, or set it once in
+~/.contacts-mcp/config.json with "debug": true. DEBUG=1 also still works. All
+log output goes to stderr; only command results go to stdout, so you can safely
+pipe/redirect stdout.
 `);
 }
