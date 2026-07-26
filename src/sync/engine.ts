@@ -29,6 +29,8 @@ export class SyncEngine {
       duration: 0,
     };
 
+    logger.info(`Starting sync with "${provider.name}" (direction: ${options.direction}${options.dryRun ? ', dry-run' : ''})`);
+
     try {
       // Tag before sync
       await this.store.gitOps.tag(`pre-sync-${provider.name}-${Date.now()}`);
@@ -49,10 +51,12 @@ export class SyncEngine {
       // Tag after sync
       await this.store.gitOps.tag(`post-sync-${provider.name}-${Date.now()}`);
     } catch (err: any) {
+      logger.error(`Sync with "${provider.name}" failed:`, err.message);
       result.errors.push(err.message);
     }
 
     result.duration = Date.now() - startTime;
+    logger.info(`Sync with "${provider.name}" finished in ${result.duration}ms: pulled ${result.pulled}, pushed ${result.pushed}, conflicts ${result.conflicts}, errors ${result.errors.length}`);
     return result;
   }
 
@@ -61,7 +65,9 @@ export class SyncEngine {
     options: SyncOptions,
     result: SyncResult,
   ): Promise<void> {
+    logger.info(`Fetching contacts from "${provider.name}"...`);
     const remoteContacts = await provider.fetchAll();
+    logger.info(`Fetched ${remoteContacts.length} remote contacts, comparing against local store...`);
     const localContacts = await this.store.list(false);
 
     // Build lookup by provider remote ID
@@ -71,7 +77,12 @@ export class SyncEngine {
       if (remoteId) localByRemoteId.set(remoteId, local);
     }
 
-    for (const remote of remoteContacts) {
+    const progressInterval = 50;
+    for (let i = 0; i < remoteContacts.length; i++) {
+      const remote = remoteContacts[i];
+      if (i > 0 && i % progressInterval === 0) {
+        logger.info(`Pull progress: ${i}/${remoteContacts.length} (pulled ${result.pulled}, conflicts ${result.conflicts})`);
+      }
       const remoteId = remote.metadata.providerIds[provider.name];
       if (!remoteId) continue;
 
@@ -122,11 +133,18 @@ export class SyncEngine {
     options: SyncOptions,
     result: SyncResult,
   ): Promise<void> {
+    logger.info(`Loading local contacts to push to "${provider.name}"...`);
     const localContacts = await this.store.list(false);
     const lastSync = await provider.getLastSyncTime();
     const lastSyncTime = lastSync ? new Date(lastSync).getTime() : 0;
+    logger.info(`Checking ${localContacts.length} local contacts for changes since last sync...`);
 
-    for (const local of localContacts) {
+    const progressInterval = 50;
+    for (let i = 0; i < localContacts.length; i++) {
+      const local = localContacts[i];
+      if (i > 0 && i % progressInterval === 0) {
+        logger.info(`Push progress: ${i}/${localContacts.length} (pushed ${result.pushed})`);
+      }
       const remoteId = local.metadata.providerIds[provider.name];
       const localModified = new Date(local.metadata.modified).getTime();
 

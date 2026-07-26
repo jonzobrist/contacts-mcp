@@ -1,17 +1,19 @@
 import * as fs from 'node:fs/promises';
 import { loadConfig } from './config.js';
 import { GitContactStore } from './store/index.js';
-import { resolveContactPoints, contactToVCard } from './contacts/index.js';
+import { resolveContactPoints, contactToVCard, importVCardFile } from './contacts/index.js';
 import { SyncEngine } from './sync/engine.js';
 import { AppleProvider } from './providers/apple.js';
 import { GoogleProvider } from './providers/google.js';
 import { CardDAVProvider } from './providers/carddav.js';
 import type { ContactProvider, ProviderConfig } from './types/index.js';
+import { logger } from './utils/index.js';
 
 interface CliOptions {
   command: string;
   output?: string;
   input?: string;
+  file?: string;
   provider?: string;
   direction: 'pull' | 'push' | 'both';
   conflictStrategy: 'local-wins' | 'remote-wins' | 'newest-wins' | 'manual';
@@ -19,6 +21,7 @@ interface CliOptions {
   includeArchived: boolean;
   defaultCountry: string;
   format: 'json' | 'csv' | 'vcf';
+  skipDuplicates: boolean;
 }
 
 export async function maybeRunCli(argv: string[]): Promise<boolean> {
@@ -28,21 +31,43 @@ export async function maybeRunCli(argv: string[]): Promise<boolean> {
     printHelp();
     return true;
   }
-  if (!['export', 'resolve', 'sync-provider'].includes(command)) return false;
+  if (!['export', 'resolve', 'sync-provider', 'import'].includes(command)) {
+    logger.error(`Unknown command: "${command}". Run "contacts-mcp help" for usage.`);
+    process.exit(1);
+  }
 
   const options = parseOptions(argv.slice(2));
+  logger.debug('Parsed CLI options:', options);
+
   const config = await loadConfig();
+  logger.info(`Using store at ${config.storePath}`);
   const store = new GitContactStore(config.storePath);
   await store.init();
 
   if (options.command === 'export') {
+    logger.info(`Exporting contacts (format: ${options.format})...`);
     const contacts = await store.list(options.includeArchived);
+    logger.info(`Loaded ${contacts.length} contacts`);
     const output = formatContacts(contacts, options.format);
     await writeOutput(options.output, output);
+    logger.info('Export complete');
+    return true;
+  }
+
+  if (options.command === 'import') {
+    if (!options.file) {
+      throw new Error('import requires --file <path.vcf>');
+    }
+    const result = await importVCardFile(store, options.file, {
+      dryRun: options.dryRun,
+      skipDuplicates: options.skipDuplicates,
+    });
+    await writeOutput(options.output, JSON.stringify(result, null, 2));
     return true;
   }
 
   if (options.command === 'sync-provider') {
+    logger.info(`Resolving provider "${options.provider ?? '(default)'}"...`);
     const provider = createProvider(config.providers, options.provider);
     const configured = await provider.isConfigured();
     if (!configured) {
@@ -53,15 +78,18 @@ export async function maybeRunCli(argv: string[]): Promise<boolean> {
           : ' Check ~/.contacts-mcp/config.json.'),
       );
     }
+    logger.info(`Syncing with "${provider.name}" (direction: ${options.direction}, conflict strategy: ${options.conflictStrategy}${options.dryRun ? ', dry-run' : ''})...`);
     const result = await new SyncEngine(store).sync(provider, {
       direction: options.direction,
       conflictStrategy: options.conflictStrategy,
       dryRun: options.dryRun,
     });
+    logger.info(`Sync complete: pulled ${result.pulled}, pushed ${result.pushed}, conflicts ${result.conflicts}, errors ${result.errors.length}`);
     await writeOutput(options.output, JSON.stringify(result, null, 2));
     return true;
   }
 
+  logger.info('Resolving contact points...');
   const input = await readInput(options.input);
   const contacts = await store.list(options.includeArchived);
   const result = resolveContactPoints(contacts, {
@@ -82,10 +110,17 @@ function parseOptions(args: string[]): CliOptions {
     direction: 'pull',
     conflictStrategy: 'newest-wins',
     dryRun: false,
+    skipDuplicates: true,
   };
+
+  // Allow `contacts-mcp import contacts.vcf` as shorthand for `--file contacts.vcf`
+  if (options.command === 'import' && args[1] && !args[1].startsWith('-')) {
+    options.file = args[1];
+  }
 
   for (let i = 1; i < args.length; i++) {
     const arg = args[i];
+    if (i === 1 && options.file === arg) continue;
     switch (arg) {
       case '--output':
       case '-o':
@@ -94,6 +129,13 @@ function parseOptions(args: string[]): CliOptions {
       case '--input':
       case '-i':
         options.input = args[++i];
+        break;
+      case '--file':
+      case '-f':
+        options.file = args[++i];
+        break;
+      case '--allow-duplicates':
+        options.skipDuplicates = false;
         break;
       case '--provider':
         options.provider = args[++i];
@@ -242,9 +284,14 @@ function printHelp(): void {
 Usage:
   contacts-mcp serve
   contacts-mcp export [--format json|csv|vcf] [--output path|-] [--include-archived]
+  contacts-mcp import <path.vcf> [--dry-run] [--allow-duplicates] [--output path|-]
   contacts-mcp resolve --input path|- [--output path|-] [--include-archived] [--default-country US]
   contacts-mcp sync-provider [--provider apple] [--direction pull|push|both] [--dry-run] [--output path|-]
 
-Without a command, contacts-mcp starts the MCP stdio server.
+Without a command, contacts-mcp starts the MCP stdio server (it will sit waiting
+on stdin — if that's not what you wanted, check your command against the list above).
+
+Set DEBUG=1 for verbose debug logging. All log output goes to stderr; only
+command results go to stdout, so you can safely pipe/redirect stdout.
 `);
 }

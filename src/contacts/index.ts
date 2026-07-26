@@ -5,6 +5,8 @@ export { searchContacts } from './search.js';
 export { findDuplicates } from './dedup.js';
 export { mergeContacts } from './merge.js';
 export { resolveContactPoints } from './resolve.js';
+export { importVCardFile } from './import.js';
+export type { ImportVCardOptions, ImportVCardResult } from './import.js';
 export type {
   ContactPointQuery,
   ResolvedContactPoint,

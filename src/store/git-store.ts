@@ -238,8 +238,13 @@ export class GitContactStore {
 
       const ids: string[] = [];
       const paths: string[] = [];
+      const progressInterval = 50;
 
-      for (const fields of contacts) {
+      for (let i = 0; i < contacts.length; i++) {
+        const fields = contacts[i];
+        if (i > 0 && i % progressInterval === 0) {
+          logger.info(`Writing contacts: ${i}/${contacts.length}...`);
+        }
         const contact = normalizeContact(createContact({
           ...fields,
           id: fields.id ?? generateId(),
@@ -258,6 +263,7 @@ export class GitContactStore {
         ids.push(contact.id);
       }
 
+      logger.info(`Committing ${paths.length} contacts to git...`);
       await this.git.addMultiple(paths);
       await this.git.commit(`Import ${contacts.length} contacts${source ? ` from ${source}` : ''}`);
       await this.git.tag(`post-import-${timestamp}`);
