@@ -79,17 +79,48 @@ Once connected, your AI assistant gets 14 tools and 4 resources for managing con
 | `rollback` | Undo changes by reverting git commits. Modes: undo last N, revert to a specific commit, revert to a tag. Dry-run supported. Creates a safety tag first so the rollback itself can be undone. |
 | `history` | View change history — globally or for a specific contact. Shows operation type, commit hash, date, and message. |
 
-### CLI Export And Resolve
+### CLI Export, Import, Resolve, and Sync
 
-The binary still starts the MCP stdio server by default. It also supports deterministic
-non-AI command-line operations for other local tools:
+The binary still starts the MCP stdio server by default — if you run it with no
+arguments (or `serve`), it will sit silently waiting for JSON-RPC on stdin. That's
+expected for MCP clients, but if you meant to run one of the commands below and
+mistype it, the CLI now errors immediately instead of hanging.
+
+It also supports deterministic non-AI command-line operations for other local tools:
 
 ```bash
 contacts-mcp export --format json --output contacts.json
 contacts-mcp export --format json --output -
+contacts-mcp import contacts.vcf
+contacts-mcp import contacts.vcf --dry-run
+contacts-mcp import contacts.vcf --allow-duplicates
 contacts-mcp resolve --input contact-points.json --output -
 contacts-mcp sync-provider --provider apple --direction pull
 ```
+
+All of these log progress to stderr as they run (file reads, parse counts,
+duplicate checks, git commit progress, sync pull/push progress) — set `DEBUG=1`
+for more verbose per-item debug output. Only the final result goes to stdout, so
+piping/redirecting stdout is safe.
+
+#### Shorter command
+
+Instead of typing `bun /path/to/contacts-mcp/dist/index.js ...` every time, link it
+once after building:
+
+```bash
+bun link
+```
+
+This registers a global `contacts-mcp` command (installed into `~/.bun/bin`, which
+`bun` puts on your `PATH`). After that you can just run:
+
+```bash
+contacts-mcp import contacts.vcf
+```
+
+from anywhere. Re-run `bun run build` after pulling changes — the linked command
+points at `dist/index.js`, so it picks up new builds automatically.
 
 `resolve` input is JSON:
 
